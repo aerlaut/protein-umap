@@ -1,0 +1,25 @@
+name: Data ingest
+on:
+    schedule:
+        - cron:  '0 0 * * *'
+    workflow_dispatch:
+        inputs:
+            environment:
+                description: 'Environment to push into'
+                type: environment
+                required: true
+                default: dev
+
+jobs:
+    ingest-data:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v5
+              with:
+                python-version: '3.9'
+                cache: 'pip'
+            - name: Install dependencies
+              run: pip install -r requirements.txt
+            - name: Ingest dataset
+              run: python3 ingest/ingest.py
