@@ -13,7 +13,11 @@ const categories = {
 }
 
 
-function CategoryItem({text}) {
+interface CategoryItemProps {
+    text: string
+}
+
+function CategoryItem({text} : CategoryItemProps) {
 
     const checkBoxId = `checkbox-${text}`
 

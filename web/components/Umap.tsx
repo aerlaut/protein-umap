@@ -1,8 +1,23 @@
+// Required because react-vega still uses class components. Next-JS 13
+// will try to render classes in server-component, which causes error
+// https://nextjs.org/docs/messages/class-component-in-server-component
+
 'use client'
 
+import { useState, useEffect } from 'react';
 import { Vega } from 'react-vega';
 
-const specWithData = (data, width, height) => ({
+
+type UMAPData = {
+    name: string,
+    values: { u: number, v: number }[]
+}
+
+interface UMAPProps {
+    data: UMAPData
+}
+
+const specWithData = (data: UMAPData, width: number, height: number) => ({
     "$schema": "https://vega.github.io/schema/vega/v5.json",
     "description": "An interactive scatter plot example supporting pan and zoom.",
     "width": width,
@@ -355,8 +370,14 @@ const specWithData = (data, width, height) => ({
     ]
 })
 
-export default function UMAP({ data }) {
+export default function UMAP({ data } : UMAPProps) {
+
+    // Detect if code is run client or server-side
+    const [isClient, setIsClient] = useState(false);
+    useEffect(() => setIsClient(true), []);
+
     return (
-        data && <Vega spec={specWithData(data, window.screen.availWidth, window.screen.availHeight)} />
+        // @ts-ignore
+        isClient && data && <Vega mode='vega' spec={specWithData(data, window.screen.availWidth, window.screen.availHeight)} />
     )
 }
