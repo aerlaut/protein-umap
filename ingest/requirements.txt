@@ -1,6 +1,6 @@
 h5py
 numpy
 pandas
-umap
+umap-learn
 requests
 tqdm
