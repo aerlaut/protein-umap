@@ -5,7 +5,6 @@ import pandas as pd
 from umap import UMAP
 import requests
 import json
-from tqdm import tqdm
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
@@ -80,7 +79,7 @@ def download_keywords(entries: List[str], request_url_template: str=KEYWORD_REQU
     }
     data = {}
 
-    def _request_keyword(pbar, entry):
+    def _request_keyword(entry):
         response = requests.get(request_url_template.replace("ENTRY_ID", entry))
 
         try:
@@ -113,21 +112,20 @@ def download_keywords(entries: List[str], request_url_template: str=KEYWORD_REQU
             row.update({ category : ','.join(values) for category, values in keyword_values.items() })
 
             data[accession_id] = row
-            pbar.update(1)
 
         except Exception as e:
-            print("Failed processing entry", entry)
+            print("Failed requesting keyword for entry", entry)
             print(e)
 
-    with tqdm(range(len(entry_ids)), ncols=80) as pbar:
+    with ThreadPoolExecutor() as executor:
+        executor.map(_request_keyword, entry_ids)
 
-        pbar_request = partial(_request_keyword, pbar)
+    keywords = list(data.values())
+    categories = list(categories.keys())
 
-        with ThreadPoolExecutor() as executor:
-            executor.map(pbar_request, entry_ids)
+    print("Successfully downloaded keywords for", len(keywords), "proteins")
 
-
-    return list(data.values()), list(categories.keys())
+    return keywords, categories
 
 
 if __name__ == "__main__":
