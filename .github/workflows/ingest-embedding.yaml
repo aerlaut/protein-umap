@@ -10,6 +10,7 @@ on:
                 required: true
                 default: dev
 
+run-name: Ingset data to ${{ inputs.environment }} by @${{ github.actor }}
 jobs:
     ingest-data:
         runs-on: ubuntu-latest
