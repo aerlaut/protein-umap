@@ -6,13 +6,6 @@ import {
 } from "@/components/ui/accordion"
 
 
-const categories = {
-    cat1: ['cat2', 'cat3', 'cat4'],
-    cat2: ['cat2', 'cat3', 'cat4'],
-    cat3: ['cat2', 'cat3', 'cat4']
-}
-
-
 interface CategoryItemProps {
     text: string
 }
@@ -31,15 +24,31 @@ function CategoryItem({text} : CategoryItemProps) {
     )
 }
 
-export default function Categories() {
+interface CategoriesProps {
+    categories: { str : { str: number[] } }
+}
+
+export default function Categories({ categories }: CategoriesProps) {
+
+
+    categories
+
     return (
         <div className="h-screen min-w-40 border-solid border-black border-r-2">
             <Accordion type="multiple" className="w-full">
-                {Object.entries(categories).map(([catName, el]) => (
-                    <AccordionItem value={catName} key={`item-${catName}`}>
-                        <AccordionTrigger>{catName}</AccordionTrigger>
+                {Object.entries(categories).map(([categoryName, keywords]) => (
+                    <AccordionItem value={categoryName} key={`item-${categoryName}`}>
+                        <AccordionTrigger>{categoryName}</AccordionTrigger>
                             <AccordionContent>
-                                {el.map((e) => <CategoryItem key={e} text={e} />)}
+                                {Object.entries(keywords)
+                                    .map(
+                                        ([keyword, accessionIds]) => (
+                                            <CategoryItem
+                                                key={keyword}
+                                                text={`${keyword} (${accessionIds.length})`}
+                                            />
+                                        )
+                                    )}
                             </AccordionContent>
                     </AccordionItem>
                 ))}
