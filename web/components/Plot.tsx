@@ -1,48 +1,32 @@
 import UMAP from "@/components/Umap"
 
-export default function Plot() {
+interface PlotProps {
+    data : {
+        accession_ids: string[],
+        keyword_mapping: { string : { string : number[] }}
+        UMAP_1: number[],
+        UMAP_2: number[]
+    }
+}
 
-    const data = {
-            "name": "raw_points",
-            "values": [
-                {
-                    "u": -0.1724099452164216,
-                    "v": 0.007374582889590287
-                },
-                {
-                    "u": 0.19643515250010635,
-                    "v": 0.13236252089007686
-                },
-                {
-                    "u": -0.05003877259110454,
-                    "v": -0.08910432731027129
-                },
-                {
-                    "u": -0.11568764038081183,
-                    "v": 0.37888941407245746
-                },
-                {
-                    "u": 0.2511246354296579,
-                    "v": 0.1009497029056371
-                },
-                {
-                    "u": 0.018398991915642943,
-                    "v": -0.07450544325415587
-                },
-                {
-                    "u": 0.11745205774273043,
-                    "v": -0.13843690510268283
-                },
-                {
-                    "u": 0.2259069427993032,
-                    "v": -0.033337587353712374
-                },
-                {
-                    "u": -0.08120675504475235,
-                    "v": 0.11060248985402266
-                }
-            ],
+export default function Plot(props : PlotProps) {
+
+    const {
+        data: {
+            accession_ids,
+            keyword_mapping,
+            UMAP_1,
+            UMAP_2
         }
+    } = props
+
+
+    const data = accession_ids.map(( accession_id, idx ) => ({
+        "accession_id": accession_id,
+        "UMAP_1": UMAP_1[idx],
+        "UMAP_2": UMAP_2[idx]
+    }))
+
 
     return (
         <UMAP data={data} />
