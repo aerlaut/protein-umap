@@ -6,7 +6,8 @@ interface PlotProps {
         keyword_mapping: { string : { string : number[] }}
         UMAP_1: number[],
         UMAP_2: number[]
-    }
+    },
+    filters: any
 }
 
 export default function Plot(props : PlotProps) {
