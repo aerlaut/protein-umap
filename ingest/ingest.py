@@ -1,20 +1,26 @@
 import h5py
 import numpy as np
 import numpy.typing as npt
-import pandas as pd
 from umap import UMAP
 import requests
 import json
+import hashlib
+import os
+import shutil
+from datetime import date
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
-from functools import partial
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Dict
 
 
 UNIPROT_EMBEDDINGS_URL = 'https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/embeddings/UP000005640_9606/per-protein.h5'
 KEYWORD_REQUEST_URL = "https://rest.uniprot.org/uniprotkb/search?query=accession_id:ENTRY_ID&fields=keyword"
 EMBEDDINGS_H5_FILENAME = "embeddings.h5"
-UMAP_CSV_FILENAME = "umap.csv"
+INGEST_DIR = "ingest"
+LAST_CHECKSUM_FILENAME = "last_checksum"
+PLOTDATA_DIR = "plotdata"
+DATA_FILE_PREFIX = "plotdata"
+LATEST_PLODATA_FILENAME = "latest.json"
 
 
 def download_embeddings(embedding_url: str, outfile: str) -> None:
@@ -37,6 +43,32 @@ def download_embeddings(embedding_url: str, outfile: str) -> None:
     with open(outfile,'wb') as f:
         for chunk in response.iter_content(chunk_size=1024):
             f.write(chunk)
+
+
+def new_embedding(embedding_filename: str, checksum_filename: str) -> Tuple[str, bool]:
+    """Determine if embedding is newer than previous by comparing embedding
+        checksum with last known checksum
+
+    Args:
+        embedding_filename (str): Name of embedding file
+        checksum_filename (str): Name of file contatining latest checksum
+
+    Returns:
+        str: Checksum of embeddding
+        bool: True if embedding is new
+    """
+
+    embedding_checksum = None
+    last_checksum = None
+
+    with open(embedding_filename, 'rb') as f:
+        data = f.read()
+        embedding_checksum = hashlib.md5(data).hexdigest()
+
+    with open(checksum_filename, 'r') as f:
+        last_checksum = f.read()
+
+    return embedding_checksum, embedding_checksum != last_checksum
 
 
 def parse_embedding(embedding_filename: str) -> Tuple[List[str], List[npt.NDArray]]:
@@ -62,22 +94,22 @@ def parse_embedding(embedding_filename: str) -> Tuple[List[str], List[npt.NDArra
     return entry_ids, embeddings
 
 
-def download_keywords(entries: List[str], request_url_template: str=KEYWORD_REQUEST_URL) -> Tuple[List[str], List[str]]:
-    """Download keywords associated with UniProt ids
+def download_keywords(
+        entries: List[str],
+        request_url_template: str=KEYWORD_REQUEST_URL
+    ) -> Tuple[List[str], Dict[str, Dict[ str, int]]] :
+    """Download keywords associated with UniProt ids, and store keyword associations based on index.
 
     Args:
-        entries (List[str]): List of UniProt accession idsd
+        entries (List[str]): List of UniProt accession ids present in UMAP
         request_url_template (str, Optional): _description_. Defaults to KEYWORD_REQUEST_URL.
 
     Returns:
-        Tuple[List[str], List[str]]: Returns list of keywords and list of available keyword categories
+        Tuple[List[str], Dict[str, Dict[ str, int]]]: Tuple containing list of accession ids and mapping of category and keywords into accession_id indices
     """
 
-
-    categories = {
-        'Accession id': True
-    }
-    data = {}
+    keyword_mapping = {}
+    accession_ids = []
 
     def _request_keyword(entry):
         response = requests.get(request_url_template.replace("ENTRY_ID", entry))
@@ -89,69 +121,117 @@ def download_keywords(entries: List[str], request_url_template: str=KEYWORD_REQU
             result = body['results'][0]
             accession_id = result['primaryAccession']
 
+            accession_ids.append(accession_id)
+            accession_id_idx = len(accession_ids) - 1
+
             # keyword object has the shape
             # {
             #     "id": "KW-1064",
             #     "category": "Biological process",
             #     "name": "Adaptive immunity"
             # }
-            row = { "Accession id" : accession_id }
-            keyword_values = {}
 
             for keyword_object in result['keywords']:
 
                 category = keyword_object['category']
-                value = keyword_object["name"]
+                keyword = keyword_object["name"]
 
-                if not keyword_values.get(category):
-                    keyword_values[category] = []
+                if not keyword_mapping.get(category):
+                    keyword_mapping[category] = defaultdict(list)
 
-                keyword_values[category].append(value)
-                categories[keyword_object["category"]] = True
-
-            row.update({ category : ','.join(values) for category, values in keyword_values.items() })
-
-            data[accession_id] = row
+                keyword_mapping[category][keyword].append(accession_id_idx)
 
         except Exception as e:
             print("Failed requesting keyword for entry", entry)
             print(e)
 
     with ThreadPoolExecutor() as executor:
-        executor.map(_request_keyword, entry_ids)
+        executor.map(_request_keyword, entries)
 
-    keywords = list(data.values())
-    categories = list(categories.keys())
+    print("Successfully downloaded keywords for", len(accession_ids), "proteins")
 
-    print("Successfully downloaded keywords for", len(keywords), "proteins")
+    return accession_ids, keyword_mapping
 
-    return keywords, categories
+
+def update_checksum(embedding_checksum: str, last_checksum_path: str) -> None:
+    """Replace content of last checksum with latest embedding checksum
+
+    Args:
+        embedding_checksum (str): Checksum of latest embedding
+        last_checksum_path (str): Path to file containing last checksum
+    """
+
+    with open(last_checksum_path, 'w') as f:
+        f.write(embedding_checksum)
+
+
+def name_latest_plotdata(plotdata_path: str, latest_plotdata_filepath) -> None:
+    """Name the latest plotdata file for easier reference
+
+    Args:
+        plotdata_path (str): Path to the latest plotdata file
+        latest_plotdata_filepath (str): Path to the latest plotdata file
+    """
+    os.remove(latest_plotdata_filepath)
+    shutil.copyfile(plotdata_path, latest_plotdata_path)
 
 
 if __name__ == "__main__":
     print("Downloading embedding...", end=" ")
-    download_embeddings(UNIPROT_EMBEDDINGS_URL, EMBEDDINGS_H5_FILENAME)
+
+    embeddings_path = os.path.join(INGEST_DIR, EMBEDDINGS_H5_FILENAME)
+    download_embeddings(UNIPROT_EMBEDDINGS_URL, embeddings_path)
     print("Complete")
+
+    print("Checking for new release...", end=" ")
+    last_checksum_path = os.path.join(INGEST_DIR, LAST_CHECKSUM_FILENAME)
+    embedding_checksum, is_new = new_embedding(embeddings_path, last_checksum_path)
+
+    if not is_new:
+        print("No new changes. Aborting ingest")
+        os.remove(embeddings_path)
+        os._exit(os.EX_OK)
+    print("New embedding present. Ingesting data.")
 
     print("Parsing embedding...", end=" ")
-    entry_ids, embeddings = parse_embedding(EMBEDDINGS_H5_FILENAME)
+    entry_ids, embeddings = parse_embedding(embeddings_path)
     print("Complete")
 
-    print("Downloading kewords for entries...", end=" ")
-    keywords, categories = download_keywords(entry_ids)
+    print("Downloading kewords for entries...")
+    accession_ids, keyword_mapping = download_keywords(entry_ids)
     print("Complete")
 
     print("Fitting UMAP...", end="")
+    # Returns umap in a Pandas dataframe with the form [(x, y)]
     umap = UMAP().fit_transform(embeddings)
     print("Complete")
 
-    print("Preparing dataframe...")
-    df = pd.DataFrame(data=keywords, columns=categories)
-    df['UMAP_1'] = umap[:, 0]
-    df['UMAP_2'] = umap[:, 1]
-    df.fillna('NA')
+    print("Preparing JSON objects...")
+    UMAP_1 = umap[:, 0].tolist()
+    UMAP_2 = umap[:, 1].tolist()
 
-    # Save in CSV file format as it is more compact than JSON
-    df.to_csv(UMAP_CSV_FILENAME)
+    payload = {
+        "accession_ids": accession_ids,
+        "keyword_mapping": keyword_mapping,
+        "UMAP_1": UMAP_1,
+        "UMAP_2": UMAP_2
+    }
 
-    print("Dataframe saved to", UMAP_CSV_FILENAME)
+    data_filename = f'{DATA_FILE_PREFIX}-{date.today().strftime("%Y-%m-%d")}.json'
+    data_filepath = os.path.join(PLOTDATA_DIR, data_filename)
+
+    with open(data_filepath, 'w') as f:
+        json.dump(payload, f)
+
+    print("Data saved to", data_filepath)
+
+    print("Updating checksum and latest plotdata...")
+    update_checksum(embedding_checksum, last_checksum_path)
+    print("Checksum updated")
+
+    os.remove(embeddings_path)
+    print("Embeddings removed")
+
+    latest_plotdata_path = os.path.join(PLOTDATA_DIR, LATEST_PLODATA_FILENAME)
+    name_latest_plotdata(data_filepath, latest_plotdata_path)
+    print("Latest plotdata updated")
