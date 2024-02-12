@@ -11,7 +11,8 @@ import { Vega } from 'react-vega';
 type UMAPData = {
     accession_id: string,
     UMAP_1: number,
-    UMAP_2: number
+    UMAP_2: number,
+    annotation: string
 }
 
 interface UMAPProps {
@@ -286,17 +287,11 @@ const specWithData = (data: UMAPData, width: number, height: number) => ({
             }
         },
         {
-            "name": "diseaseColor",
+            "name": "categoryColor",
             "type": "ordinal",
-            "domain": {"data": "points", "field": "Disease"},
+            "domain": {"data": "points", "field": "annotation"},
             "range": {"scheme": "category20"}
         },
-        {
-            "name": "componentColor",
-            "type": "ordinal",
-            "domain": {"data": "points", "field": "Cellular component"},
-            "range": {"scheme": "category20"}
-        }
     ],
     "axes": [
         {
@@ -332,13 +327,13 @@ const specWithData = (data: UMAPData, width: number, height: number) => ({
                         "field": "UMAP_2"
                     },
                     "fill": {
-                        "field": "Cellular component",
-                        "scale": "componentColor"
+                        "field": "annotation",
+                        "scale": "categoryColor"
                     }
                 },
             }
         }
-    ]
+    ],
 })
 
 export default function UMAP({ data } : UMAPProps) {

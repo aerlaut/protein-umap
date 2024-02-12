@@ -57,7 +57,7 @@ export default function Categories( props : CategoriesProps) {
                 {Object.entries(categories).map(([categoryName, keywords], categoryIdx) => (
                     <AccordionItem value={categoryName} key={categoryName}>
                         <AccordionTrigger>
-                            {`${categoryName} (${Object.keys(keywords).length} categories)`}
+                            {categoryName}
                         </AccordionTrigger>
                             <AccordionContent>
 
@@ -66,7 +66,7 @@ export default function Categories( props : CategoriesProps) {
                                             <CategoryItem
                                                 key={keyword}
                                                 checked={ filters[categoryName][keyword] }
-                                                text={`${keyword} (${accessionIds.length} cells)`}
+                                                text={`${keyword} (${accessionIds.length} entries)`}
                                                 onChecked={() => onUpdateFilter(categoryName, keyword)}
                                             />
                                         )
