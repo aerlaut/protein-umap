@@ -34,7 +34,7 @@ function CategoryItem(props : CategoryItemProps) {
 }
 
 interface CategoriesProps {
-    categories: { str : { str: number[] } },
+    categories: { [key: string] : { [key: string] : number[] } },
     filters: any,
     onUpdateFilter: (level: string, value: string) => any
 }

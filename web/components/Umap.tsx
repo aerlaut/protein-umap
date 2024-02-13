@@ -9,11 +9,11 @@ import { Vega } from 'react-vega';
 import { Handler } from 'vega-tooltip';
 
 
-type UMAPData = {
+export type UMAPData = {
     accession_id: string,
     UMAP_1: number,
     UMAP_2: number,
-    annotation: string
+    annotation: string | null
 }
 
 interface UMAPProps {
