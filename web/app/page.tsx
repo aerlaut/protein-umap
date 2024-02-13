@@ -5,7 +5,7 @@ import Categories from "@/components/Categories";
 import Plot from "@/components/Plot";
 import filterReducer from '@/reducers/filterReducer';
 
-const PLOTDATA_URL = "http://localhost:3000"
+const PLOTDATA_URL = "https://raw.githubusercontent.com/cragnolini-lab/uniprot-umap/main/plotdata"
 
 export default function Home() {
 
