@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { Vega } from 'react-vega';
+import { Handler } from 'vega-tooltip';
 
 
 type UMAPData = {
@@ -29,9 +30,8 @@ const specWithData = (data: UMAPData, width: number, height: number) => ({
     "config": {
         "axis": {
             "domain": false,
-            "tickSize": 3,
-            "tickColor": "#888",
-            "labelFont": "Monaco, Courier New"
+            "ticks": false,
+            "labels": false
         }
     },
     "data": [
@@ -50,8 +50,28 @@ const specWithData = (data: UMAPData, width: number, height: number) => ({
                     "signal": "yext"
                 }
             ]
-          }
-        ],
+        },
+        {
+            "name": "base",
+            "source": "points",
+            "transform": [
+                {
+                    "type": "filter",
+                    "expr": "!datum.annotation"
+                }
+            ]
+        },
+        {
+            "name": "annotated",
+            "source": "points",
+            "transform": [
+                {
+                    "type": "filter",
+                    "expr": "datum.annotation"
+                }
+            ]
+        }
+    ],
     "signals": [
         {
             "name": "margin",
@@ -287,10 +307,10 @@ const specWithData = (data: UMAPData, width: number, height: number) => ({
             }
         },
         {
-            "name": "categoryColor",
+            "name": "annotationColor",
             "type": "ordinal",
-            "domain": {"data": "points", "field": "annotation"},
-            "range": {"scheme": "category20"}
+            "domain": {"data": "annotated", "field": "annotation"},
+            "range": {"scheme": "tableau10"}
         },
     ],
     "axes": [
@@ -313,7 +333,7 @@ const specWithData = (data: UMAPData, width: number, height: number) => ({
         {
             "type": "symbol",
             "from": {
-                "data": "points"
+                "data": "base"
             },
             "clip": true,
             "encode": {
@@ -327,8 +347,33 @@ const specWithData = (data: UMAPData, width: number, height: number) => ({
                         "field": "UMAP_2"
                     },
                     "fill": {
+                        "value": "#EFEFEF",
+                    }
+                },
+            }
+        },
+        {
+            "type": "symbol",
+            "from": {
+                "data": "annotated"
+            },
+            "clip": true,
+            "encode": {
+                "enter": {
+                    "tooltip": {"signal": "datum.annotation ? { 'UniProtID' : datum.accession_id, 'Annotation' : datum.annotation } : '' "}
+                },
+                "update": {
+                    "x": {
+                        "scale": "xscale",
+                        "field": "UMAP_1"
+                    },
+                    "y": {
+                        "scale": "yscale",
+                        "field": "UMAP_2"
+                    },
+                    "fill": {
                         "field": "annotation",
-                        "scale": "categoryColor"
+                        "scale": "annotationColor"
                     }
                 },
             }
@@ -342,8 +387,10 @@ export default function UMAP({ data } : UMAPProps) {
     const [isClient, setIsClient] = useState(false);
     useEffect(() => setIsClient(true), []);
 
+    const tooltip = new Handler()
+
     return (
         // @ts-ignore
-        isClient && data && <Vega mode='vega' spec={specWithData(data, 1000, 800)} />
+        isClient && data && <Vega mode='vega' spec={specWithData(data, screen.availWidth, screen.availHeight)} tooltip={tooltip.call} />
     )
 }

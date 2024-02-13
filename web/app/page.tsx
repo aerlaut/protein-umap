@@ -25,6 +25,10 @@ export default function Home() {
 
     return (
         <main className="flex flex-row">
+            <Plot
+                data={plotData}
+                filters={filters}
+            />
             <Categories
                 categories={plotData.keyword_mapping}
                 filters={filters}
@@ -34,10 +38,6 @@ export default function Home() {
                         payload: [category, keyword]
                     })
                 }}
-            />
-            <Plot
-                data={plotData}
-                filters={filters}
             />
         </main>
     );
