@@ -66,7 +66,7 @@ export default function Categories( props : CategoriesProps) {
                                             <CategoryItem
                                                 key={keyword}
                                                 checked={ filters[categoryName][keyword] }
-                                                text={`${keyword} (${accessionIds.length} entries)`}
+                                                text={`${keyword} (${accessionIds.length})`}
                                                 onChecked={() => onUpdateFilter(categoryName, keyword)}
                                             />
                                         )
