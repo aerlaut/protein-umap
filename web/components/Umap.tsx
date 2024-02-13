@@ -290,7 +290,7 @@ const specWithData = (data: UMAPData, width: number, height: number) => ({
             "name": "categoryColor",
             "type": "ordinal",
             "domain": {"data": "points", "field": "annotation"},
-            "range": {"scheme": "category20"}
+            "range": {"scheme": "tableau20"}
         },
     ],
     "axes": [
