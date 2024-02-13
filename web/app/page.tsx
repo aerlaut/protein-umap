@@ -7,9 +7,20 @@ import filterReducer from '@/reducers/filterReducer';
 
 const PLOTDATA_URL = "https://raw.githubusercontent.com/cragnolini-lab/uniprot-umap/main/plotdata"
 
+export type plotData = {
+    accession_ids: string,
+    keyword_mapping: {
+        [key: string]: {
+            [key: string]: number[]
+        }
+    },
+    UMAP_1: number[],
+    UMAP_2: number[]
+}
+
 export default function Home() {
 
-    const [plotData, setPlotData] = useState<any>()
+    const [plotData, setPlotData] = useState<plotData>()
     const [filters, dispatch] = useReducer(filterReducer, {})
 
     useEffect(() => {
