@@ -35,7 +35,7 @@ function generatePlotData(data: any, filters: any) {
         return activeFilters
     }
 
-    function getTagEntryIds(activeFilters: any, tagKeywordMapping: any): { [key: string] : number[] } {
+    function getTagEntryIds(activeFilters: [string, string][], tagKeywordMapping: any): { [key: string] : number[] } {
 
         return activeFilters.reduce((acc, [category, tag]) => {
             acc[tag] = tagKeywordMapping[category][tag]
@@ -45,8 +45,8 @@ function generatePlotData(data: any, filters: any) {
     }
 
     function getEntryIdxWithNoTags(allEntries: any, filterEntryMap: { [key: string] : number[]}) {
-        const entriesWitHTags = new Set<number>(Object.values(filterEntryMap).flat())
-        return difference(allEntries, Array.from(entriesWitHTags))
+        const entriesWithTags = Object.values(filterEntryMap).flat()
+        return difference(allEntries, Array.from(entriesWithTags))
     }
 
 
@@ -59,7 +59,6 @@ function generatePlotData(data: any, filters: any) {
         accession_id: accession_ids[idx],
         UMAP_1: data.UMAP_1[idx],
         UMAP_2: data.UMAP_2[idx],
-        annotation: "None"
     }))
 
     const mappedIds = Object.entries(filterEntryIds)
@@ -82,20 +81,9 @@ function generatePlotData(data: any, filters: any) {
 
 export default function Plot(props : PlotProps) {
 
-    const {
-        data,
-        filters
-    } = props
-
-    // const plotData = data.accession_ids.map(( accession_id, idx ) => ({
-    //     "accession_id": accession_id,
-    //     "UMAP_1": data.UMAP_1[idx],
-    //     "UMAP_2": data.UMAP_2[idx]
-    // }))
+    const { data, filters } = props
 
     const plotData = generatePlotData(data, filters)
-
-    console.log("*** plotData", plotData)
 
     return (
         <UMAP data={plotData} />

@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { Vega } from 'react-vega';
+import { Handler } from 'vega-tooltip';
 
 
 type UMAPData = {
@@ -29,9 +30,8 @@ const specWithData = (data: UMAPData, width: number, height: number) => ({
     "config": {
         "axis": {
             "domain": false,
-            "tickSize": 3,
-            "tickColor": "#888",
-            "labelFont": "Monaco, Courier New"
+            "ticks": false,
+            "labels": false
         }
     },
     "data": [
@@ -317,6 +317,9 @@ const specWithData = (data: UMAPData, width: number, height: number) => ({
             },
             "clip": true,
             "encode": {
+                "enter": {
+                    "tooltip": {"signal": "datum.annotation ? { 'UniProtID' : datum.accession_id, 'Annotation' : datum.annotation } : '' "}
+                },
                 "update": {
                     "x": {
                         "scale": "xscale",
@@ -342,8 +345,10 @@ export default function UMAP({ data } : UMAPProps) {
     const [isClient, setIsClient] = useState(false);
     useEffect(() => setIsClient(true), []);
 
+    const tooltip = new Handler()
+
     return (
         // @ts-ignore
-        isClient && data && <Vega mode='vega' spec={specWithData(data, 1000, 800)} />
+        isClient && data && <Vega mode='vega' spec={specWithData(data, screen.availWidth, screen.availHeight)} tooltip={tooltip.call} />
     )
 }

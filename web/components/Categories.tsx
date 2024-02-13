@@ -24,10 +24,10 @@ function CategoryItem(props : CategoryItemProps) {
     const checkBoxId = `checkbox-${text}`
 
     return (
-        <div>
+        <div className='my-1'>
             <label htmlFor={checkBoxId} className="align-middle">
                 <input id={checkBoxId} type="checkbox" checked={checked} onChange={() => onChecked()}/>
-                <span className="ml-1">{text}</span>
+                <span className="ml-2 cursor-pointer">{text}</span>
             </label>
         </div>
     )
@@ -51,7 +51,7 @@ export default function Categories( props : CategoriesProps) {
 
 
     return (
-        <div className="h-screen min-w-40 border-solid border-black border-r-2">
+        <div className="fixed top-8 right-8 h-5/6 w-80 border-solid border-black border-2 px-4 py-2 bg-gray-100 overflow-scroll rounded-lg">
             <Accordion type="multiple" className="w-full">
 
                 {Object.entries(categories).map(([categoryName, keywords], categoryIdx) => (
