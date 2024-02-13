@@ -9,12 +9,14 @@ import { Vega } from 'react-vega';
 
 
 type UMAPData = {
-    name: string,
-    values: { u: number, v: number }[]
+    accession_id: string,
+    UMAP_1: number,
+    UMAP_2: number,
+    annotation: string
 }
 
 interface UMAPProps {
-    data: UMAPData
+    data: UMAPData[]
 }
 
 const specWithData = (data: UMAPData, width: number, height: number) => ({
@@ -22,13 +24,8 @@ const specWithData = (data: UMAPData, width: number, height: number) => ({
     "description": "An interactive scatter plot example supporting pan and zoom.",
     "width": width,
     "height": height,
-    "padding": {
-        "top": 10,
-        "left": 40,
-        "bottom": 20,
-        "right": 10
-    },
-    "autosize": "none",
+    "autosize": "pad",
+    "padding": 5,
     "config": {
         "axis": {
             "domain": false,
@@ -38,19 +35,18 @@ const specWithData = (data: UMAPData, width: number, height: number) => ({
         }
     },
     "data": [
-        data,
         {
             "name": "points",
-            "source": "raw_points",
+            "values": data,
             "transform": [
                 {
                     "type": "extent",
-                    "field": "u",
+                    "field": "UMAP_1",
                     "signal": "xext"
                 },
                 {
                     "type": "extent",
-                    "field": "v",
+                    "field": "UMAP_2",
                     "signal": "yext"
                 }
             ]
@@ -72,14 +68,6 @@ const specWithData = (data: UMAPData, width: number, height: number) => ({
                     "events": "*:pointerout",
                     "encode": "leave"
                 },
-                {
-                    "events": "*:pointerdown",
-                    "encode": "select"
-                },
-                {
-                    "events": "*:pointerup",
-                    "encode": "release"
-                }
             ]
         },
         {
@@ -297,7 +285,13 @@ const specWithData = (data: UMAPData, width: number, height: number) => ({
             "range": {
                 "signal": "yrange"
             }
-        }
+        },
+        {
+            "name": "categoryColor",
+            "type": "ordinal",
+            "domain": {"data": "points", "field": "annotation"},
+            "range": {"scheme": "category20"}
+        },
     ],
     "axes": [
         {
@@ -323,51 +317,23 @@ const specWithData = (data: UMAPData, width: number, height: number) => ({
             },
             "clip": true,
             "encode": {
-                "enter": {
-                    "fillOpacity": {
-                        "value": 0.6
-                    },
-                    "fill": {
-                        "value": "steelblue"
-                    }
-                },
                 "update": {
                     "x": {
                         "scale": "xscale",
-                        "field": "u"
+                        "field": "UMAP_1"
                     },
                     "y": {
                         "scale": "yscale",
-                        "field": "v"
+                        "field": "UMAP_2"
                     },
-                    "size": {
-                        "signal": "size"
-                    }
-                },
-                "hover": {
                     "fill": {
-                        "value": "firebrick"
+                        "field": "annotation",
+                        "scale": "categoryColor"
                     }
                 },
-                "leave": {
-                    "fill": {
-                        "value": "steelblue"
-                    }
-                },
-                "select": {
-                    "size": {
-                        "signal": "size",
-                        "mult": 5
-                    }
-                },
-                "release": {
-                    "size": {
-                        "signal": "size"
-                    }
-                }
             }
         }
-    ]
+    ],
 })
 
 export default function UMAP({ data } : UMAPProps) {
@@ -378,6 +344,6 @@ export default function UMAP({ data } : UMAPProps) {
 
     return (
         // @ts-ignore
-        isClient && data && <Vega mode='vega' spec={specWithData(data, window.screen.availWidth, window.screen.availHeight)} />
+        isClient && data && <Vega mode='vega' spec={specWithData(data, 1000, 800)} />
     )
 }

@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import {
     Accordion,
     AccordionContent,
@@ -5,44 +7,75 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion"
 
-
-const categories = {
-    cat1: ['cat2', 'cat3', 'cat4'],
-    cat2: ['cat2', 'cat3', 'cat4'],
-    cat3: ['cat2', 'cat3', 'cat4']
-}
-
-
 interface CategoryItemProps {
-    text: string
+    text: string,
+    checked: boolean
+    onChecked: () => any
 }
 
-function CategoryItem({text} : CategoryItemProps) {
+function CategoryItem(props : CategoryItemProps) {
+
+    const {
+        text,
+        checked,
+        onChecked
+    } = props
 
     const checkBoxId = `checkbox-${text}`
 
     return (
         <div>
             <label htmlFor={checkBoxId} className="align-middle">
-                <input id={checkBoxId} type="checkbox" />
+                <input id={checkBoxId} type="checkbox" checked={checked} onChange={() => onChecked()}/>
                 <span className="ml-1">{text}</span>
             </label>
         </div>
     )
 }
 
-export default function Categories() {
+interface CategoriesProps {
+    categories: { str : { str: number[] } },
+    filters: any,
+    onUpdateFilter: (level: string, value: string) => any
+}
+
+
+export default function Categories( props : CategoriesProps) {
+
+
+    const {
+        categories,
+        filters,
+        onUpdateFilter
+    } = props
+
+
     return (
         <div className="h-screen min-w-40 border-solid border-black border-r-2">
             <Accordion type="multiple" className="w-full">
-                {Object.entries(categories).map(([catName, el]) => (
-                    <AccordionItem value={catName} key={`item-${catName}`}>
-                        <AccordionTrigger>{catName}</AccordionTrigger>
+
+                {Object.entries(categories).map(([categoryName, keywords], categoryIdx) => (
+                    <AccordionItem value={categoryName} key={categoryName}>
+                        <AccordionTrigger>
+                            {categoryName}
+                        </AccordionTrigger>
                             <AccordionContent>
-                                {el.map((e) => <CategoryItem key={e} text={e} />)}
+
+                                {Object.entries(keywords)
+                                    .map(([keyword, accessionIds], keywordIdx) => (
+                                            <CategoryItem
+                                                key={keyword}
+                                                checked={ filters[categoryName][keyword] }
+                                                text={`${keyword} (${accessionIds.length} entries)`}
+                                                onChecked={() => onUpdateFilter(categoryName, keyword)}
+                                            />
+                                        )
+                                )}
+
                             </AccordionContent>
                     </AccordionItem>
                 ))}
+
             </Accordion>
         </div>
     )

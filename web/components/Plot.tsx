@@ -1,50 +1,103 @@
 import UMAP from "@/components/Umap"
+import { difference } from 'lodash'
 
-export default function Plot() {
+interface PlotProps {
+    data : {
+        accession_ids: string[],
+        keyword_mapping: { string : { string : number[] }}
+        UMAP_1: number[],
+        UMAP_2: number[]
+    },
+    filters: { [key:string] : { [key:string] : boolean }}
+}
 
-    const data = {
-            "name": "raw_points",
-            "values": [
-                {
-                    "u": -0.1724099452164216,
-                    "v": 0.007374582889590287
-                },
-                {
-                    "u": 0.19643515250010635,
-                    "v": 0.13236252089007686
-                },
-                {
-                    "u": -0.05003877259110454,
-                    "v": -0.08910432731027129
-                },
-                {
-                    "u": -0.11568764038081183,
-                    "v": 0.37888941407245746
-                },
-                {
-                    "u": 0.2511246354296579,
-                    "v": 0.1009497029056371
-                },
-                {
-                    "u": 0.018398991915642943,
-                    "v": -0.07450544325415587
-                },
-                {
-                    "u": 0.11745205774273043,
-                    "v": -0.13843690510268283
-                },
-                {
-                    "u": 0.2259069427993032,
-                    "v": -0.033337587353712374
-                },
-                {
-                    "u": -0.08120675504475235,
-                    "v": 0.11060248985402266
-                }
-            ],
-        }
+function generatePlotData(data: any, filters: any) {
+
+    const {
+        accession_ids,
+        keyword_mapping,
+        UMAP_1,
+        UMAP_2
+    } = data
+
+
+    function getActiveFilters(filters: any) {
+        const activeFilters: [string, string][] = []
+
+        Object.keys(filters).forEach((category) => {
+
+            Object.keys(filters[category]).forEach((tag) => {
+                if (filters[category][tag]) activeFilters.push([ category, tag ])
+            })
+
+        })
+
+        return activeFilters
+    }
+
+    function getTagEntryIds(activeFilters: any, tagKeywordMapping: any): { [key: string] : number[] } {
+
+        return activeFilters.reduce((acc, [category, tag]) => {
+            acc[tag] = tagKeywordMapping[category][tag]
+            return acc
+        }, {} as { [key: string] : number[] } )
+
+    }
+
+    function getEntryIdxWithNoTags(allEntries: any, filterEntryMap: { [key: string] : number[]}) {
+        const entriesWitHTags = new Set<number>(Object.values(filterEntryMap).flat())
+        return difference(allEntries, Array.from(entriesWitHTags))
+    }
+
+
+    // filters
+    const activeFilters = getActiveFilters(filters)
+    const filterEntryIds = getTagEntryIds(activeFilters, keyword_mapping)
+    const idxWithNoTags = getEntryIdxWithNoTags( Array.from(accession_ids.keys()), filterEntryIds)
+
+    const plotData = idxWithNoTags.map((idx) => ({
+        accession_id: accession_ids[idx],
+        UMAP_1: data.UMAP_1[idx],
+        UMAP_2: data.UMAP_2[idx],
+        annotation: "None"
+    }))
+
+    const mappedIds = Object.entries(filterEntryIds)
+        .map(([ tagName , tagIdx ]) => {
+
+        const value = tagIdx.map((idx: number) => ({
+            accession_id: accession_ids[idx],
+            UMAP_1: data.UMAP_1[idx],
+            UMAP_2: data.UMAP_2[idx],
+            annotation: tagName
+        }))
+
+        return value
+    })
+
+
+    return mappedIds.reduce(( acc, map ) => [...acc, ...map], plotData)
+
+}
+
+export default function Plot(props : PlotProps) {
+
+    const {
+        data,
+        filters
+    } = props
+
+    // const plotData = data.accession_ids.map(( accession_id, idx ) => ({
+    //     "accession_id": accession_id,
+    //     "UMAP_1": data.UMAP_1[idx],
+    //     "UMAP_2": data.UMAP_2[idx]
+    // }))
+
+    const plotData = generatePlotData(data, filters)
+
+    console.log("*** plotData", plotData)
 
     return (
-        <UMAP data={data} />
+        <UMAP data={plotData} />
     )
 }
