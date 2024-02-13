@@ -50,8 +50,28 @@ const specWithData = (data: UMAPData, width: number, height: number) => ({
                     "signal": "yext"
                 }
             ]
-          }
-        ],
+        },
+        {
+            "name": "base",
+            "source": "points",
+            "transform": [
+                {
+                    "type": "filter",
+                    "expr": "!datum.annotation"
+                }
+            ]
+        },
+        {
+            "name": "annotated",
+            "source": "points",
+            "transform": [
+                {
+                    "type": "filter",
+                    "expr": "datum.annotation"
+                }
+            ]
+        }
+    ],
     "signals": [
         {
             "name": "margin",
@@ -287,10 +307,10 @@ const specWithData = (data: UMAPData, width: number, height: number) => ({
             }
         },
         {
-            "name": "categoryColor",
+            "name": "annotationColor",
             "type": "ordinal",
-            "domain": {"data": "points", "field": "annotation"},
-            "range": {"scheme": "tableau20"}
+            "domain": {"data": "annotated", "field": "annotation"},
+            "range": {"scheme": "tableau10"}
         },
     ],
     "axes": [
@@ -313,7 +333,29 @@ const specWithData = (data: UMAPData, width: number, height: number) => ({
         {
             "type": "symbol",
             "from": {
-                "data": "points"
+                "data": "base"
+            },
+            "clip": true,
+            "encode": {
+                "update": {
+                    "x": {
+                        "scale": "xscale",
+                        "field": "UMAP_1"
+                    },
+                    "y": {
+                        "scale": "yscale",
+                        "field": "UMAP_2"
+                    },
+                    "fill": {
+                        "value": "#EFEFEF",
+                    }
+                },
+            }
+        },
+        {
+            "type": "symbol",
+            "from": {
+                "data": "annotated"
             },
             "clip": true,
             "encode": {
@@ -331,7 +373,7 @@ const specWithData = (data: UMAPData, width: number, height: number) => ({
                     },
                     "fill": {
                         "field": "annotation",
-                        "scale": "categoryColor"
+                        "scale": "annotationColor"
                     }
                 },
             }
