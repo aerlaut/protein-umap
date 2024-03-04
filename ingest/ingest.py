@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Tuple, List, Dict
 
 
-UNIPROT_EMBEDDINGS_URL = 'https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/embeddings/UP000005640_9606/per-protein.h5'
+UNIPROT_EMBEDDINGS_URL = "https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/embeddings/UP000005640_9606/per-protein.h5"
 KEYWORD_REQUEST_URL = "https://rest.uniprot.org/uniprotkb/search?query=accession_id:ENTRY_ID&fields=keyword"
 EMBEDDINGS_H5_FILENAME = "embeddings.h5"
 INGEST_DIR = "ingest"
@@ -35,12 +35,12 @@ def download_embeddings(embedding_url: str, outfile: str) -> None:
     """
 
     # Download embedding, save to EMBEDDINGS_H5_FILENAME
-    response = requests.get(embedding_url, params={'stream': True})
+    response = requests.get(embedding_url, params={"stream": True})
 
     if response.status_code != 200:
         raise Exception("Error downloading embedding")
 
-    with open(outfile,'wb') as f:
+    with open(outfile, "wb") as f:
         for chunk in response.iter_content(chunk_size=1024):
             f.write(chunk)
 
@@ -61,11 +61,11 @@ def new_embedding(embedding_filename: str, checksum_filename: str) -> Tuple[str,
     embedding_checksum = None
     last_checksum = None
 
-    with open(embedding_filename, 'rb') as f:
+    with open(embedding_filename, "rb") as f:
         data = f.read()
         embedding_checksum = hashlib.md5(data).hexdigest()
 
-    with open(checksum_filename, 'r') as f:
+    with open(checksum_filename, "r") as f:
         last_checksum = f.read()
 
     return embedding_checksum, embedding_checksum != last_checksum
@@ -84,7 +84,7 @@ def parse_embedding(embedding_filename: str) -> Tuple[List[str], List[npt.NDArra
     entry_ids = []
     embeddings = []
 
-    with h5py.File(embedding_filename, 'r') as f:
+    with h5py.File(embedding_filename, "r") as f:
         entry_ids = list(f.keys())
         embeddings = np.zeros((len(entry_ids), 1024))
 
@@ -95,9 +95,8 @@ def parse_embedding(embedding_filename: str) -> Tuple[List[str], List[npt.NDArra
 
 
 def download_keywords(
-        entries: List[str],
-        request_url_template: str=KEYWORD_REQUEST_URL
-    ) -> Tuple[List[str], Dict[str, Dict[ str, int]]] :
+    entries: List[str], request_url_template: str = KEYWORD_REQUEST_URL
+) -> Tuple[List[str], Dict[str, Dict[str, int]]]:
     """Download keywords associated with UniProt ids, and store keyword associations based on index.
 
     Args:
@@ -118,8 +117,8 @@ def download_keywords(
             body = response.json()
 
             # We expect there would only be 1 result
-            result = body['results'][0]
-            accession_id = result['primaryAccession']
+            result = body["results"][0]
+            accession_id = result["primaryAccession"]
 
             accession_ids.append(accession_id)
             accession_id_idx = len(accession_ids) - 1
@@ -131,9 +130,8 @@ def download_keywords(
             #     "name": "Adaptive immunity"
             # }
 
-            for keyword_object in result['keywords']:
-
-                category = keyword_object['category']
+            for keyword_object in result["keywords"]:
+                category = keyword_object["category"]
                 keyword = keyword_object["name"]
 
                 if not keyword_mapping.get(category):
@@ -161,7 +159,7 @@ def update_checksum(embedding_checksum: str, last_checksum_path: str) -> None:
         last_checksum_path (str): Path to file containing last checksum
     """
 
-    with open(last_checksum_path, 'w') as f:
+    with open(last_checksum_path, "w") as f:
         f.write(embedding_checksum)
 
 
@@ -214,13 +212,13 @@ if __name__ == "__main__":
         "accession_ids": accession_ids,
         "keyword_mapping": keyword_mapping,
         "UMAP_1": UMAP_1,
-        "UMAP_2": UMAP_2
+        "UMAP_2": UMAP_2,
     }
 
     data_filename = f'{DATA_FILE_PREFIX}-{date.today().strftime("%Y-%m-%d")}.json'
     data_filepath = os.path.join(PLOTDATA_DIR, data_filename)
 
-    with open(data_filepath, 'w') as f:
+    with open(data_filepath, "w") as f:
         json.dump(payload, f)
 
     print("Data saved to", data_filepath)
