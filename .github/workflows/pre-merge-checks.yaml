@@ -2,9 +2,10 @@ name: Pre-merge checks
 on:
   push:
     branches:
+      - '**'
       - '!main'
 jobs:
-  pre-merge-check:
+  run-python-checks:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -14,7 +15,24 @@ jobs:
         with:
           python-version: '3.9'
           cache: pip
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: pip install -r ingest/requirements.txt
-      - name: Run linter
+      - name: Run Python linter
         run: ruff check .
+  run-js-checks:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache-dependency-path: ./web/package-lock.json
+      - name: Install js dependencies
+        run: npm ci
+      - name: Run js linter
+        run: npm run lint
