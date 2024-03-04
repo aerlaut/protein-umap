@@ -5,7 +5,7 @@ on:
             - '!main'
 
 jobs:
-    ingest-data:
+    pre-merge-check:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
