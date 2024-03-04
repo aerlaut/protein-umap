@@ -2,6 +2,7 @@ name: Pre-merge checks
 on:
   push:
     branches:
+      - '**'
       - '!main'
 jobs:
   run-python-checks:
