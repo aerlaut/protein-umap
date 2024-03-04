@@ -30,5 +30,9 @@ Visualization of the UMAP uses [Vega](https://vega.github.io/) via the [react-ve
 
 ## Maintainers & Contributors
 
-- Anugerah Erlaut
-- Tristan Cragnolini
+- Anugerah Erlaut (@aerlaut)
+- Tristan Cragnolini (@tc427)
+
+## References
+1. The UniProt Consortium. UniProt: the Universal Protein Knowledgebase in 2023.  2022;<b>51</b>:D523–31.
+2. McInnes L, Healy J, Melville J. UMAP: Uniform Manifold Approximation and Projection for Dimension Reduction.  2018, DOI: https://doi.org/10.48550/arXiv.1802.03426.
