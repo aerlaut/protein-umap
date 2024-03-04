@@ -1,0 +1,20 @@
+name: Pre-merge checks
+on:
+  push:
+    branches:
+      - '!main'
+jobs:
+  pre-merge-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r ingest/requirements.txt
+      - name: Run linter
+        run: ruff check .
