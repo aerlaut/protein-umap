@@ -39,6 +39,7 @@ next-env.d.ts
 # Python
 venv
 .pytest*
+__pycache__
 
 # Custom
 .ruff_cache

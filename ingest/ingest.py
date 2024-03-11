@@ -41,11 +41,13 @@ def download_embeddings(embedding_url: str, outfile: str) -> None:
         raise Exception("Error downloading embedding")
 
     with open(outfile, "wb") as f:
-        for chunk in response.iter_content(chunk_size=1024):
+        for chunk in response.iter_content(chunk_size=1024 * 1024):
             f.write(chunk)
 
 
-def new_embedding(embedding_filename: str, checksum_filename: str) -> Tuple[str, bool]:
+def is_new_embedding(
+    embedding_filename: str, checksum_filename: str
+) -> Tuple[str, bool]:
     """Determine if embedding is newer than previous by comparing embedding
         checksum with last known checksum
 
@@ -71,7 +73,7 @@ def new_embedding(embedding_filename: str, checksum_filename: str) -> Tuple[str,
     return embedding_checksum, embedding_checksum != last_checksum
 
 
-def parse_embedding(embedding_filename: str) -> Tuple[List[str], List[npt.NDArray]]:
+def parse_embedding(embedding_filename: str) -> Tuple[List[str], npt.NDArray]:
     """Parse .h5 embedding file and return the list of UniProt entries and embedding
 
     Args:
@@ -86,7 +88,12 @@ def parse_embedding(embedding_filename: str) -> Tuple[List[str], List[npt.NDArra
 
     with h5py.File(embedding_filename, "r") as f:
         entry_ids = list(f.keys())
-        embeddings = np.zeros((len(entry_ids), 1024))
+
+        if len(entry_ids) == 0:
+            raise Exception("Embedding file is empty")
+
+        embedding_size = f[entry_ids[0]].shape[0]
+        embeddings = np.zeros((len(entry_ids), embedding_size))
 
         for i, val in enumerate(f.values()):
             embeddings[i, :] = np.array(val)
@@ -142,6 +149,7 @@ def download_keywords(
         except Exception as e:
             print("Failed requesting keyword for entry", entry)
             print(e)
+            raise
 
     with ThreadPoolExecutor() as executor:
         executor.map(_request_keyword, entries)
@@ -163,7 +171,7 @@ def update_checksum(embedding_checksum: str, last_checksum_path: str) -> None:
         f.write(embedding_checksum)
 
 
-def name_latest_plotdata(plotdata_path: str, latest_plotdata_filepath) -> None:
+def replace_latest_plotdata(plotdata_path: str, latest_plotdata_filepath) -> None:
     """Name the latest plotdata file for easier reference
 
     Args:
@@ -171,7 +179,7 @@ def name_latest_plotdata(plotdata_path: str, latest_plotdata_filepath) -> None:
         latest_plotdata_filepath (str): Path to the latest plotdata file
     """
     os.remove(latest_plotdata_filepath)
-    shutil.copyfile(plotdata_path, latest_plotdata_path)
+    shutil.copyfile(plotdata_path, latest_plotdata_filepath)
 
 
 if __name__ == "__main__":
@@ -183,7 +191,7 @@ if __name__ == "__main__":
 
     print("Checking for new release...", end=" ")
     last_checksum_path = os.path.join(INGEST_DIR, LAST_CHECKSUM_FILENAME)
-    embedding_checksum, is_new = new_embedding(embeddings_path, last_checksum_path)
+    embedding_checksum, is_new = is_new_embedding(embeddings_path, last_checksum_path)
 
     if not is_new:
         print("No new changes. Aborting ingest")
@@ -231,5 +239,5 @@ if __name__ == "__main__":
     print("Embeddings removed")
 
     latest_plotdata_path = os.path.join(PLOTDATA_DIR, LATEST_PLODATA_FILENAME)
-    name_latest_plotdata(data_filepath, latest_plotdata_path)
+    replace_latest_plotdata(data_filepath, latest_plotdata_path)
     print("Latest plotdata updated")
