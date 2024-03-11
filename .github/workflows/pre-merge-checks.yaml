@@ -7,6 +7,9 @@ on:
 jobs:
   run-python-checks:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./ingesst
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -16,9 +19,11 @@ jobs:
           python-version: '3.9'
           cache: pip
       - name: Install Python dependencies
-        run: pip install -r ingest/requirements.txt
+        run: pip install -r requirements-dev.txt
       - name: Run Python linter
         run: ruff check .
+      - name: Run Python test
+        run: pytest
   run-js-checks:
     runs-on: ubuntu-latest
     defaults:
