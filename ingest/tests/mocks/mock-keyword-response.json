@@ -1,0 +1,79 @@
+[
+    {
+        "results": [
+            {
+                "entryType": "UniProtKB reviewed (Swiss-Prot)",
+                "primaryAccession": "protein1",
+                "keywords": [
+                    {
+                        "id": "KW-1185",
+                        "category": "Technical term",
+                        "name": "Reference proteome"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "results": [
+            {
+                "entryType": "UniProtKB reviewed (Swiss-Prot)",
+                "primaryAccession": "protein2",
+                "keywords": [
+                    {
+                        "id": "KW-0963",
+                        "category": "Cellular component",
+                        "name": "Cytoplasm"
+                    },
+                    {
+                        "id": "KW-0378",
+                        "category": "Molecular function",
+                        "name": "Hydrolase"
+                    },
+                    {
+                        "id": "KW-0460",
+                        "category": "Ligand",
+                        "name": "Magnesium"
+                    },
+                    {
+                        "id": "KW-0479",
+                        "category": "Ligand",
+                        "name": "Metal-binding"
+                    },
+                    {
+                        "id": "KW-1185",
+                        "category": "Technical term",
+                        "name": "Reference proteome"
+                    },
+                    {
+                        "id": "KW-0694",
+                        "category": "Molecular function",
+                        "name": "RNA-binding"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "results": [
+            {
+                "entryType": "UniProtKB unreviewed (TrEMBL)",
+                "primaryAccession": "protein3",
+                "keywords": [
+                    {
+                        "evidences": [
+                            {
+                                "evidenceCode": "ECO:0000313",
+                                "source": "Proteomes",
+                                "id": "UP000005640"
+                            }
+                        ],
+                        "id": "KW-1185",
+                        "category": "Technical term",
+                        "name": "Reference proteome"
+                    }
+                ]
+            }
+        ]
+    }
+]

@@ -102,33 +102,31 @@ def parse_embedding(embedding_filename: str) -> Tuple[List[str], npt.NDArray]:
 
 
 def download_keywords(
-    entries: List[str], request_url_template: str = KEYWORD_REQUEST_URL
-) -> Tuple[List[str], Dict[str, Dict[str, int]]]:
+    accession_ids: List[str], request_url_template: str = KEYWORD_REQUEST_URL
+) -> Dict[str, Dict[str, int]]:
     """Download keywords associated with UniProt ids, and store keyword associations based on index.
 
     Args:
-        entries (List[str]): List of UniProt accession ids present in UMAP
+        accession_ids (List[str]): List of UniProt accession ids present in UMAP
         request_url_template (str, Optional): _description_. Defaults to KEYWORD_REQUEST_URL.
 
     Returns:
-        Tuple[List[str], Dict[str, Dict[ str, int]]]: Tuple containing list of accession ids and mapping of category and keywords into accession_id indices
+        Dict[str, Dict[ str, int]]: Mapping of category and keywords into accession_id indices
     """
 
     keyword_mapping = {}
-    accession_ids = []
 
-    def _request_keyword(entry):
-        response = requests.get(request_url_template.replace("ENTRY_ID", entry))
+    def _request_keyword(accession_id):
 
         try:
+            response = requests.get(request_url_template.replace("ENTRY_ID", accession_id))
+            response.raise_for_status()
+
             body = response.json()
 
             # We expect there would only be 1 result
             result = body["results"][0]
-            accession_id = result["primaryAccession"]
-
-            accession_ids.append(accession_id)
-            accession_id_idx = len(accession_ids) - 1
+            accession_id_idx = accession_ids.index(accession_id)
 
             # keyword object has the shape
             # {
@@ -147,16 +145,19 @@ def download_keywords(
                 keyword_mapping[category][keyword].append(accession_id_idx)
 
         except Exception as e:
-            print("Failed requesting keyword for entry", entry)
-            print(e)
-            raise
+            raise Exception(f"Failed requesting keyword for accession_id {accession_id}: {str(e)}")
 
     with ThreadPoolExecutor() as executor:
-        executor.map(_request_keyword, entries)
+        results = executor.map(_request_keyword, accession_ids)
+
+        # Iterate over results to catch exceptions
+        for result in results:
+            if result is not None:
+                result.exception()
 
     print("Successfully downloaded keywords for", len(accession_ids), "proteins")
 
-    return accession_ids, keyword_mapping
+    return keyword_mapping
 
 
 def update_checksum(embedding_checksum: str, last_checksum_path: str) -> None:
@@ -200,11 +201,11 @@ if __name__ == "__main__":
     print("New embedding present. Ingesting data.")
 
     print("Parsing embedding...", end=" ")
-    entry_ids, embeddings = parse_embedding(embeddings_path)
+    accession_ids, embeddings = parse_embedding(embeddings_path)
     print("Complete")
 
     print("Downloading kewords for entries...")
-    accession_ids, keyword_mapping = download_keywords(entry_ids)
+    keyword_mapping = download_keywords(accession_ids)
     print("Complete")
 
     print("Fitting UMAP...", end="")
