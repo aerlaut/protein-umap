@@ -41,11 +41,13 @@ def download_embeddings(embedding_url: str, outfile: str) -> None:
         raise Exception("Error downloading embedding")
 
     with open(outfile, "wb") as f:
-        for chunk in response.iter_content(chunk_size=1024):
+        for chunk in response.iter_content(chunk_size=1024 * 1024):
             f.write(chunk)
 
 
-def new_embedding(embedding_filename: str, checksum_filename: str) -> Tuple[str, bool]:
+def is_new_embedding(
+    embedding_filename: str, checksum_filename: str
+) -> Tuple[str, bool]:
     """Determine if embedding is newer than previous by comparing embedding
         checksum with last known checksum
 
@@ -71,7 +73,7 @@ def new_embedding(embedding_filename: str, checksum_filename: str) -> Tuple[str,
     return embedding_checksum, embedding_checksum != last_checksum
 
 
-def parse_embedding(embedding_filename: str) -> Tuple[List[str], List[npt.NDArray]]:
+def parse_embedding(embedding_filename: str) -> Tuple[List[str], npt.NDArray]:
     """Parse .h5 embedding file and return the list of UniProt entries and embedding
 
     Args:
@@ -86,7 +88,12 @@ def parse_embedding(embedding_filename: str) -> Tuple[List[str], List[npt.NDArra
 
     with h5py.File(embedding_filename, "r") as f:
         entry_ids = list(f.keys())
-        embeddings = np.zeros((len(entry_ids), 1024))
+
+        if len(entry_ids) == 0:
+            raise Exception("Embedding file is empty")
+
+        embedding_size = f[entry_ids[0]].shape[0]
+        embeddings = np.zeros((len(entry_ids), embedding_size))
 
         for i, val in enumerate(f.values()):
             embeddings[i, :] = np.array(val)
@@ -95,33 +102,31 @@ def parse_embedding(embedding_filename: str) -> Tuple[List[str], List[npt.NDArra
 
 
 def download_keywords(
-    entries: List[str], request_url_template: str = KEYWORD_REQUEST_URL
-) -> Tuple[List[str], Dict[str, Dict[str, int]]]:
+    accession_ids: List[str], request_url_template: str = KEYWORD_REQUEST_URL
+) -> Dict[str, Dict[str, int]]:
     """Download keywords associated with UniProt ids, and store keyword associations based on index.
 
     Args:
-        entries (List[str]): List of UniProt accession ids present in UMAP
+        accession_ids (List[str]): List of UniProt accession ids present in UMAP
         request_url_template (str, Optional): _description_. Defaults to KEYWORD_REQUEST_URL.
 
     Returns:
-        Tuple[List[str], Dict[str, Dict[ str, int]]]: Tuple containing list of accession ids and mapping of category and keywords into accession_id indices
+        Dict[str, Dict[ str, int]]: Mapping of category and keywords into accession_id indices
     """
 
     keyword_mapping = {}
-    accession_ids = []
 
-    def _request_keyword(entry):
-        response = requests.get(request_url_template.replace("ENTRY_ID", entry))
+    def _request_keyword(accession_id):
 
         try:
+            response = requests.get(request_url_template.replace("ENTRY_ID", accession_id))
+            response.raise_for_status()
+
             body = response.json()
 
             # We expect there would only be 1 result
             result = body["results"][0]
-            accession_id = result["primaryAccession"]
-
-            accession_ids.append(accession_id)
-            accession_id_idx = len(accession_ids) - 1
+            accession_id_idx = accession_ids.index(accession_id)
 
             # keyword object has the shape
             # {
@@ -140,15 +145,19 @@ def download_keywords(
                 keyword_mapping[category][keyword].append(accession_id_idx)
 
         except Exception as e:
-            print("Failed requesting keyword for entry", entry)
-            print(e)
+            raise Exception(f"Failed requesting keyword for accession_id {accession_id}: {str(e)}")
 
     with ThreadPoolExecutor() as executor:
-        executor.map(_request_keyword, entries)
+        results = executor.map(_request_keyword, accession_ids)
+
+        # Iterate over results to catch exceptions
+        for result in results:
+            if result is not None:
+                result.exception()
 
     print("Successfully downloaded keywords for", len(accession_ids), "proteins")
 
-    return accession_ids, keyword_mapping
+    return keyword_mapping
 
 
 def update_checksum(embedding_checksum: str, last_checksum_path: str) -> None:
@@ -163,7 +172,7 @@ def update_checksum(embedding_checksum: str, last_checksum_path: str) -> None:
         f.write(embedding_checksum)
 
 
-def name_latest_plotdata(plotdata_path: str, latest_plotdata_filepath) -> None:
+def replace_latest_plotdata(plotdata_path: str, latest_plotdata_filepath) -> None:
     """Name the latest plotdata file for easier reference
 
     Args:
@@ -171,7 +180,7 @@ def name_latest_plotdata(plotdata_path: str, latest_plotdata_filepath) -> None:
         latest_plotdata_filepath (str): Path to the latest plotdata file
     """
     os.remove(latest_plotdata_filepath)
-    shutil.copyfile(plotdata_path, latest_plotdata_path)
+    shutil.copyfile(plotdata_path, latest_plotdata_filepath)
 
 
 if __name__ == "__main__":
@@ -183,7 +192,7 @@ if __name__ == "__main__":
 
     print("Checking for new release...", end=" ")
     last_checksum_path = os.path.join(INGEST_DIR, LAST_CHECKSUM_FILENAME)
-    embedding_checksum, is_new = new_embedding(embeddings_path, last_checksum_path)
+    embedding_checksum, is_new = is_new_embedding(embeddings_path, last_checksum_path)
 
     if not is_new:
         print("No new changes. Aborting ingest")
@@ -192,11 +201,11 @@ if __name__ == "__main__":
     print("New embedding present. Ingesting data.")
 
     print("Parsing embedding...", end=" ")
-    entry_ids, embeddings = parse_embedding(embeddings_path)
+    accession_ids, embeddings = parse_embedding(embeddings_path)
     print("Complete")
 
     print("Downloading kewords for entries...")
-    accession_ids, keyword_mapping = download_keywords(entry_ids)
+    keyword_mapping = download_keywords(accession_ids)
     print("Complete")
 
     print("Fitting UMAP...", end="")
@@ -231,5 +240,5 @@ if __name__ == "__main__":
     print("Embeddings removed")
 
     latest_plotdata_path = os.path.join(PLOTDATA_DIR, LATEST_PLODATA_FILENAME)
-    name_latest_plotdata(data_filepath, latest_plotdata_path)
+    replace_latest_plotdata(data_filepath, latest_plotdata_path)
     print("Latest plotdata updated")
