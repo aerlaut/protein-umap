@@ -29,7 +29,7 @@ export default function Legend(props: LegendItemProps) {
     const selected = Object.entries(items).reduce((acc, [_, labels]) => {
         const active = Object.entries(labels).filter(([_, value]) => value).map(([label, _]) => label)
         return [...acc, ...active]
-    }, [])
+    }, [] as string[])
 
     const getColor = (idx: number) => TABLEAU10_COLORS[idx % TABLEAU10_COLORS.length]
 
