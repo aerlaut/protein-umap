@@ -3,6 +3,7 @@
 import { useState, useEffect, useReducer } from 'react';
 import Categories from "@/components/Categories";
 import Plot from "@/components/Plot";
+import Legend from '@/components/Legend';
 import filterReducer from '@/reducers/filterReducer';
 
 const PLOTDATA_URL = "https://raw.githubusercontent.com/cragnolini-lab/uniprot-umap/main/plotdata"
@@ -50,6 +51,7 @@ export default function Home() {
                     })
                 }}
             />
+            <Legend items={filters}/>
         </main>
     );
 }

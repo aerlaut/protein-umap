@@ -5,7 +5,7 @@ import {
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
-} from "@/components/ui/accordion"
+} from "@/components/ui/Accordion"
 
 interface CategoryItemProps {
     text: string,
@@ -51,7 +51,7 @@ export default function Categories( props : CategoriesProps) {
 
 
     return (
-        <div className="fixed top-8 right-8 h-5/6 w-80 border-solid border-black border-2 px-4 py-2 bg-gray-100 overflow-scroll rounded-lg">
+        <div className="fixed top-8 left-8 h-5/6 w-80 border-solid border-black border-2 px-4 py-2 bg-gray-100 overflow-scroll rounded-lg">
             <Accordion type="multiple" className="w-full">
 
                 {Object.entries(categories).map(([categoryName, keywords], categoryIdx) => (
