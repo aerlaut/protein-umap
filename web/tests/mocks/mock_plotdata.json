@@ -1,0 +1,21 @@
+{
+    "accession_ids": [
+        "A0A075B123",
+        "A0A075B456"
+    ],
+    "keyword_mapping": {
+        "Biological process": {
+            "Adaptive immunity": [
+                0,
+                1
+            ],
+            "Transcription regulation": [1]
+        },
+        "Cellular component": {
+            "Cell membrane": [0, 1],
+            "Immunoglobulin": [0]
+        }
+    },
+    "UMAP_1": [-0.2769528031349182, 2.7435085773468018],
+    "UMAP_2": [2.7954213619232178, 0.006467580795288]
+}

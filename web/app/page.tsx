@@ -6,7 +6,7 @@ import Plot from "@/components/Plot";
 import Legend from '@/components/Legend';
 import filterReducer from '@/reducers/filterReducer';
 
-const PLOTDATA_URL = "https://raw.githubusercontent.com/cragnolini-lab/uniprot-umap/main/plotdata"
+export const PLOTDATA_URL = "https://raw.githubusercontent.com/cragnolini-lab/uniprot-umap/main/plotdata"
 
 export type plotData = {
     accession_ids: string,
@@ -19,7 +19,7 @@ export type plotData = {
     UMAP_2: number[]
 }
 
-export default function Home() {
+export default function App() {
 
     const [plotData, setPlotData] = useState<plotData>()
     const [filters, dispatch] = useReducer(filterReducer, {})

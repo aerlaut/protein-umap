@@ -35,7 +35,9 @@ export default function Legend(props: LegendItemProps) {
 
     return (
         selected.length && (
-            <div className="fixed top-8 right-16 px-4 py-2 w-50 bg-white border-solid border-2 border-slate-100">
+            <div
+                id="legend-container"
+                className="fixed top-8 right-16 px-4 py-2 w-50 bg-white border-solid border-2 border-slate-100">
                 <div className="mb-2"><strong>LEGEND</strong></div>
                 {
                     selected.map((item, idx) => (
