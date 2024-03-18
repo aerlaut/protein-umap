@@ -6,7 +6,7 @@ import Plot from "@/components/Plot";
 import Legend from '@/components/Legend';
 import filterReducer from '@/reducers/filterReducer';
 
-export const PLOTDATA_URL = "https://raw.githubusercontent.com/cragnolini-lab/uniprot-umap/main/plotdata"
+const PLOTDATA_URL = "https://raw.githubusercontent.com/cragnolini-lab/uniprot-umap/main/plotdata"
 
 export type plotData = {
     accession_ids: string,

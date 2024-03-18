@@ -5,8 +5,10 @@ import { enableFetchMocks } from 'jest-fetch-mock'
 import type { MockResponseInit } from 'jest-fetch-mock';
 import userEvent from '@testing-library/user-event'
 
-import App, { PLOTDATA_URL } from "../app/page"
+import App from "../app/page"
 import mock_plotdata from './mocks/mock_plotdata.json'
+
+const PLOTDATA_URL = "https://raw.githubusercontent.com/cragnolini-lab/uniprot-umap/main/plotdata"
 
 enableFetchMocks()
 
