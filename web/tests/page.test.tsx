@@ -51,6 +51,7 @@ describe('App', () => {
             render(<App />)
         })
 
+        // Select the 1st category
         const categoryName = Object.keys(mock_plotdata.keyword_mapping)[0]
         const categoryEl = screen.getByText(categoryName)
         const categoryObj = mock_plotdata.keyword_mapping[categoryName]
@@ -68,12 +69,17 @@ describe('App', () => {
                 user.click(el)
         }))
 
-        const legendEl = await screen.findByText("LEGEND")
+        // The LEGEND header should appear
+        await screen.findByText("LEGEND")
 
         await Promise.all(
             Object.keys(categoryObj)
             .map(async (keyword) => {
-                await screen.findByText(keyword)
+
+                // There should be 2 entries - the legend and the tags
+                const els = await screen.findAllByText(keyword)
+                expect(els.length).toEqual(2)
+
         }))
 
     });
