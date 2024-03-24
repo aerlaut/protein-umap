@@ -1,6 +1,9 @@
+export const INIT_ACTION = 'init'
+export const TOGGLE_ACTION = 'toggle'
+
 export default function filterReducer(state: any, action: any) {
 
-    if (action.type == 'init') {
+    if (action.type == INIT_ACTION) {
 
         const categories: { categories : { [key:string]: { [key:string]: number[] }}} = action.payload
         const initObject: { [key:string]: { [key:string]: boolean } } = {}
@@ -23,7 +26,7 @@ export default function filterReducer(state: any, action: any) {
 
     }
 
-    if (action.type == 'toggle') {
+    if (action.type == TOGGLE_ACTION) {
         const [ category, keyword ] = action.payload;
 
         return {

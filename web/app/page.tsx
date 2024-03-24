@@ -4,7 +4,7 @@ import { useState, useEffect, useReducer } from 'react';
 import Categories from "@/components/Categories";
 import Plot from "@/components/Plot";
 import Legend from '@/components/Legend';
-import filterReducer from '@/reducers/filterReducer';
+import filterReducer, { INIT_ACTION, TOGGLE_ACTION } from '@/reducers/filterReducer';
 
 const PLOTDATA_URL = "https://raw.githubusercontent.com/cragnolini-lab/uniprot-umap/main/plotdata"
 
@@ -29,7 +29,7 @@ export default function App() {
             .then((res) => res.json())
             .then((data) => {
                 setPlotData(data)
-                dispatch({ type: 'init', payload: data.keyword_mapping })
+                dispatch({ type: INIT_ACTION, payload: data.keyword_mapping })
             });
     }, [])
 
@@ -46,7 +46,7 @@ export default function App() {
                 filters={filters}
                 onUpdateFilter={(category, keyword) => {
                     dispatch({
-                        type: 'toggle',
+                        type: TOGGLE_ACTION,
                         payload: [category, keyword]
                     })
                 }}
